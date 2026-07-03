@@ -189,7 +189,15 @@ app.get('/api/webhook-logs', (req, res) => {
   res.json(state.webhookLogs);
 });
 
-app.post('/webhook/lead', async (req, res) => {
+app.all('/webhook/lead', async (req, res) => {
+  if (req.method === 'GET') {
+    return res.send('GET request to /webhook/lead received. The server is working.');
+  }
+  
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
   const data = req.body;
   const log: WebhookLog = {
     id: `LOG-${Date.now()}`,
@@ -257,10 +265,6 @@ app.post('/webhook/lead', async (req, res) => {
     await saveState();
     res.status(500).json(log.responseBody);
   }
-});
-
-app.get('/webhook/lead', async (req, res) => {
-  res.send('GET request to /webhook/lead received. The server is working.');
 });
 
 app.post('/api/leads', async (req, res) => {
