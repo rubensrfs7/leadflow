@@ -1,14 +1,28 @@
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Columns, Settings as SettingsIcon, MessageSquare, Plus, X, Sun, Moon, Webhook } from 'lucide-react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from './lib/firebase';
 import Kanban from './components/Kanban';
 import Dashboard from './components/Dashboard';
 import SettingsView from './components/SettingsView';
 import WebhookLogsView from './components/WebhookLogsView';
 import Chat from './components/Chat';
 import AddLeadModal from './components/AddLeadModal';
+import Login from './components/Login';
 import { Lead, Settings } from './types';
 
 export default function App() {
+  const [user, setUser] = useState<any>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoadingAuth(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [view, setView] = useState<'kanban' | 'dashboard' | 'settings' | 'webhooks'>('dashboard');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
@@ -32,8 +46,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchState();
-  }, []);
+    if (user) {
+        fetchState();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -42,6 +58,14 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
+
+  if (loadingAuth) {
+    return <div className="flex h-screen items-center justify-center">Carregando...</div>;
+  }
+
+  if (!user) {
+    return <Login />;
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 overflow-hidden transition-colors">
@@ -62,10 +86,16 @@ export default function App() {
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-            className="w-full flex items-center justify-center md:justify-start p-2 rounded-lg bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+            className="w-full flex items-center justify-center md:justify-start p-2 rounded-lg bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors mb-2"
           >
             {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             <span className="ml-3 hidden md:block">{theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}</span>
+          </button>
+          <button
+            onClick={() => signOut(auth)}
+            className="w-full flex items-center justify-center md:justify-start p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+          >
+            <span className="hidden md:block">Sair</span>
           </button>
         </div>
       </aside>
