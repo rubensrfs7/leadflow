@@ -1,8 +1,8 @@
 import { useState, memo } from 'react';
-import { X, User, Copy, ChevronRight, Save } from 'lucide-react';
+import { X, User, Copy, ChevronRight, Save, Trash2 } from 'lucide-react';
 import { Lead } from '../types';
 
-export default memo(function LeadDetailModal({ lead, onClose, onUpdateLead }: { lead: Lead | null, onClose: () => void, onUpdateLead: (updatedLead: Lead) => void }) {
+export default memo(function LeadDetailModal({ lead, onClose, onUpdateLead, onDelete }: { lead: Lead | null, onClose: () => void, onUpdateLead: (updatedLead: Lead) => void, onDelete: () => void }) {
   if (!lead) return null;
 
   const [protocolo, setProtocolo] = useState(lead.protocolo || '');
@@ -62,11 +62,22 @@ export default memo(function LeadDetailModal({ lead, onClose, onUpdateLead }: { 
         setNewComment('');
   }
 
+  const handleDelete = async () => {
+      if (confirm('Tem certeza que deseja excluir este lead?')) {
+          await fetch(`/api/leads/${lead.id}`, { method: 'DELETE' });
+          onDelete();
+          onClose();
+      }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="flex gap-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl transition-colors border border-gray-200 dark:border-gray-700">
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-between mb-4">
+              <button onClick={handleDelete} className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200 bg-red-50 dark:bg-red-900/20 p-1.5 rounded-full transition-colors">
+                  <Trash2 size={20} />
+              </button>
               <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 p-1.5 rounded-full transition-colors">
                 <X size={20} />
               </button>

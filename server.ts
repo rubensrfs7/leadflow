@@ -5,6 +5,13 @@ import crypto from 'crypto';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import { Lead, WebhookLog } from './src/types';
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin
+admin.initializeApp({
+  credential: admin.credential.applicationDefault()
+});
+const dbAdmin = admin.firestore();
 
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 
@@ -347,9 +354,20 @@ app.put('/api/leads/:id', async (req, res) => {
 });
 
 app.delete('/api/leads/:id', async (req, res) => {
-  state.leads = state.leads.filter(l => l.id !== req.params.id);
+  const { id } = req.params;
+  
+  // Delete from state/data.json
+  state.leads = state.leads.filter(l => l.id !== id);
   await saveState();
-  res.json({ success: true });
+
+  // Delete from Firestore
+  try {
+    await dbAdmin.collection('leads').doc(id).delete();
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting from Firestore:', error);
+    res.status(500).json({ error: 'Failed to delete from database' });
+  }
 });
 
 // AI Chat Endpoint

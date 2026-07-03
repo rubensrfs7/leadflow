@@ -69,7 +69,7 @@ export default function Kanban({ leads, onUpdate }: { leads: Lead[], onUpdate: (
 
   return (
     <div className="h-full flex flex-col relative">
-      <LeadDetailModal key={selectedLead?.id} lead={selectedLead} onClose={() => setSelectedLead(null)} onUpdateLead={handleUpdateLead} />
+      <LeadDetailModal key={selectedLead?.id} lead={selectedLead} onClose={() => setSelectedLead(null)} onUpdateLead={handleUpdateLead} onDelete={() => { onUpdate(); setSelectedLead(null); }} />
       {toast && (
         <div className={`absolute top-0 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all ${
           toast.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'
