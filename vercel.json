@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/dist/server.cjs" }
+    {
+      "source": "/(.*)",
+      "destination": "/api/server"
+    }
   ]
 }
