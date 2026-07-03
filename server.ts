@@ -259,6 +259,10 @@ app.post('/webhook/lead', async (req, res) => {
   }
 });
 
+app.get('/webhook/lead', async (req, res) => {
+  res.send('GET request to /webhook/lead received. The server is working.');
+});
+
 app.post('/api/leads', async (req, res) => {
   const data = req.body;
   const newLead: Lead = {
