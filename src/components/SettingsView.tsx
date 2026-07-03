@@ -127,29 +127,6 @@ export default function SettingsView({ settings, onUpdate }: { settings: Setting
         </form>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Webhook de Entrada (Leads)</h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
-            Envie requisições POST para este endpoint para criar leads automaticamente a partir de formulários, RD Station, Typeform, etc.
-          </p>
-        </div>
-        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
-          <div className="text-sm font-mono text-gray-800 dark:text-gray-200 break-all mb-2">
-            <span className="text-blue-600 dark:text-blue-400 font-bold">POST</span> {appUrl}/webhook/lead
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">O payload deve ser um JSON com pelo menos o campo <code className="dark:bg-gray-800 dark:text-gray-300 p-0.5 rounded">nome</code>. Outros campos aceitos: <code className="dark:bg-gray-800 dark:text-gray-300 p-0.5 rounded">email</code>, <code className="dark:bg-gray-800 dark:text-gray-300 p-0.5 rounded">telefone</code>, <code className="dark:bg-gray-800 dark:text-gray-300 p-0.5 rounded">empresa</code>, <code className="dark:bg-gray-800 dark:text-gray-300 p-0.5 rounded">valor_estimado</code>, <code className="dark:bg-gray-800 dark:text-gray-300 p-0.5 rounded">origem</code>.</p>
-          <pre className="text-xs bg-gray-800 dark:bg-gray-950 text-green-400 p-3 rounded-lg overflow-x-auto border dark:border-gray-800">
-{`{
-  "nome": "João Silva",
-  "email": "joao@email.com",
-  "telefone": "11987654321",
-  "empresa": "Acme Corp",
-  "origem": "Formulário Site"
-}`}
-          </pre>
-        </div>
-      </div>
 
       {isConnectModalOpen && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
