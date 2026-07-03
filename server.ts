@@ -8,7 +8,7 @@ import { Lead, WebhookLog } from './src/types';
 
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 
-const app = express();
+export const app = express();
 app.use(express.json());
 const PORT = 3000;
 
@@ -548,4 +548,7 @@ async function startServer() {
   });
 }
 
-startServer();
+// startServer();
+if (require.main === module) {
+  startServer();
+}
