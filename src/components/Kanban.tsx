@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Lead, COLUMNS } from '../types';
 import { LayoutGrid, List, Zap, UserPlus, Phone, CheckCircle, FileText, Briefcase, Award, Headphones, Trash2, Building, DollarSign, Target } from 'lucide-react';
 import LeadDetailModal from './LeadDetailModal';
 
-const COLUMN_METADATA: Record<string, { color: string, icon: JSX.Element }> = {
+const COLUMN_METADATA: Record<string, { color: string, icon: React.ReactNode }> = {
   'Novo Lead': { color: 'text-blue-500', icon: <UserPlus size={16} /> },
   'Contato': { color: 'text-orange-500', icon: <Phone size={16} /> },
   'Qualificado': { color: 'text-green-500', icon: <CheckCircle size={16} /> },

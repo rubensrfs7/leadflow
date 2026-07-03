@@ -1,3 +1,14 @@
+export interface WebhookLog {
+  id: string;
+  timestamp: string;
+  endpoint: string;
+  method: string;
+  payload: any;
+  responseStatus: number;
+  responseBody: any;
+  status: 'success' | 'failure';
+}
+
 export interface HistoryEntry {
   message: string;
   timestamp: string;

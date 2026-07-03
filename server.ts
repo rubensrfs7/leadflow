@@ -3,7 +3,8 @@ import path from 'path';
 import fs from 'fs/promises';
 import crypto from 'crypto';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
+import { Lead, WebhookLog } from './src/types';
 
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 
@@ -15,29 +16,6 @@ const PORT = 3000;
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 
 // Types
-interface Lead {
-  id: string;
-  nome: string;
-  email?: string;
-  telefone?: string;
-  empresa?: string;
-  cargo?: string;
-  origem?: string;
-  valor_estimado?: number | null;
-  moeda: string;
-  tags: string[];
-  ip?: string;
-  fbp?: string;
-  fbc?: string;
-  coluna_atual: string;
-  historico: string[];
-  criado_em: string;
-  atualizado_em: string;
-  notas: string[];
-  responsavel?: string;
-  score: number;
-}
-
 interface Settings {
   pixelId: string;
   accessToken: string;
@@ -47,12 +25,14 @@ interface Settings {
 interface State {
   leads: Lead[];
   settings: Settings;
+  webhookLogs: WebhookLog[];
 }
 
 // Initial State
 let state: State = {
   leads: [],
-  settings: { pixelId: '', accessToken: '', configurado: false }
+  settings: { pixelId: '', accessToken: '', configurado: false },
+  webhookLogs: []
 };
 
 // Load State
@@ -205,38 +185,78 @@ app.post('/api/settings', async (req, res) => {
   res.json({ success: true });
 });
 
+app.get('/api/webhook-logs', (req, res) => {
+  res.json(state.webhookLogs);
+});
+
 app.post('/webhook/lead', async (req, res) => {
   const data = req.body;
-  const newLead: Lead = {
-    id: `LEAD-${Date.now()}`,
-    nome: data.nome || 'Novo Lead via Webhook',
-    email: data.email || '',
-    telefone: data.telefone || '',
-    empresa: data.empresa || '',
-    cargo: data.cargo || '',
-    origem: data.origem || 'Webhook',
-    valor_estimado: data.valor_estimado ? Number(data.valor_estimado) : null,
-    moeda: 'BRL',
-    tags: data.tags || [],
-    coluna_atual: 'Novo Lead',
-    historico: [`Criado via Webhook em ${new Date().toISOString()}`],
-    criado_em: new Date().toISOString(),
-    atualizado_em: new Date().toISOString(),
-    notas: data.notas || [],
-    responsavel: data.responsavel || '',
-    score: 0
+  const log: WebhookLog = {
+    id: `LOG-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    endpoint: '/webhook/lead',
+    method: 'POST',
+    payload: data,
+    responseStatus: 200,
+    responseBody: {},
+    status: 'success'
   };
-  newLead.score = calculateScore(newLead);
-  state.leads.push(newLead);
-  
-  const eventInfo = COLUMNS.find(c => c.name === 'Novo Lead');
-  let metaResult = null;
-  if (eventInfo) {
-    metaResult = await triggerMetaEvent(newLead, eventInfo);
+
+  try {
+    const newLead: Lead = {
+      id: `LEAD-${Date.now()}`,
+      nome: data.nome || 'Novo Lead via Webhook',
+      email: data.email || '',
+      telefone: data.telefone || '',
+      empresa: data.empresa || '',
+      cargo: data.cargo || '',
+      origem: data.origem || 'Webhook',
+      valor_estimado: data.valor_estimado ? Number(data.valor_estimado) : null,
+      moeda: 'BRL',
+      tags: data.tags || [],
+      ip: data.ip || '',
+      fbp: data.fbp || '',
+      fbc: data.fbc || '',
+      coluna_atual: 'Novo Lead',
+      historico: [{ message: `Criado via Webhook em ${new Date().toISOString()}`, timestamp: new Date().toISOString() }],
+      criado_em: new Date().toISOString(),
+      atualizado_em: new Date().toISOString(),
+      comentarios: [],
+      notas: data.notas || [],
+      responsavel: data.responsavel || '',
+      score: 0,
+      condicao_negociacao: data.condicao_negociacao || '',
+      motivo_perda: data.motivo_perda || '',
+      plano_vendido: data.plano_vendido || '',
+      segmento_atuacao: data.segmento_atuacao || '',
+      avaliacao_lead: data.avaliacao_lead || '',
+      conjunto: data.conjunto || '',
+      campanha: data.campanha || '',
+      criativo: data.criativo || '',
+      cidade: data.cidade || '',
+      estado: data.estado || ''
+    };
+    newLead.score = calculateScore(newLead);
+    state.leads.push(newLead);
+    
+    const eventInfo = COLUMNS.find(c => c.name === 'Novo Lead');
+    let metaResult = null;
+    if (eventInfo) {
+      metaResult = await triggerMetaEvent(newLead, eventInfo);
+    }
+    
+    log.responseBody = { success: true, lead: newLead, meta: metaResult };
+    state.webhookLogs.push(log);
+    await saveState();
+    res.json(log.responseBody);
+  } catch (e: any) {
+    log.status = 'failure';
+    log.responseStatus = 500;
+    log.responseBody = { error: e.message };
+    state.webhookLogs.push(log);
+    await saveState();
+    res.status(500).json(log.responseBody);
   }
-  
-  await saveState();
-  res.json({ success: true, lead: newLead, meta: metaResult });
 });
 
 app.post('/api/leads', async (req, res) => {
@@ -252,13 +272,27 @@ app.post('/api/leads', async (req, res) => {
     valor_estimado: data.valor_estimado ? Number(data.valor_estimado) : null,
     moeda: 'BRL',
     tags: data.tags || [],
+    ip: data.ip || '',
+    fbp: data.fbp || '',
+    fbc: data.fbc || '',
     coluna_atual: 'Novo Lead',
-    historico: [`Criado em ${new Date().toISOString()}`],
+    historico: [{ message: `Criado em ${new Date().toISOString()}`, timestamp: new Date().toISOString() }],
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
+    comentarios: [],
     notas: data.notas || [],
     responsavel: data.responsavel || '',
-    score: 0
+    score: 0,
+    condicao_negociacao: data.condicao_negociacao || '',
+    motivo_perda: data.motivo_perda || '',
+    plano_vendido: data.plano_vendido || '',
+    segmento_atuacao: data.segmento_atuacao || '',
+    avaliacao_lead: data.avaliacao_lead || '',
+    conjunto: data.conjunto || '',
+    campanha: data.campanha || '',
+    criativo: data.criativo || '',
+    cidade: data.cidade || '',
+    estado: data.estado || ''
   };
   newLead.score = calculateScore(newLead);
   state.leads.push(newLead);
@@ -345,13 +379,13 @@ Mostre sempre o status do evento Meta caso as ferramentas retornem essa informa√
               name: 'create_lead',
               description: 'Cria um novo lead no CRM',
               parameters: {
-                type: 'OBJECT',
+                type: Type.OBJECT,
                 properties: {
-                  nome: { type: 'STRING' },
-                  email: { type: 'STRING' },
-                  telefone: { type: 'STRING' },
-                  empresa: { type: 'STRING' },
-                  valor_estimado: { type: 'NUMBER' }
+                  nome: { type: Type.STRING },
+                  email: { type: Type.STRING },
+                  telefone: { type: Type.STRING },
+                  empresa: { type: Type.STRING },
+                  valor_estimado: { type: Type.NUMBER }
                 },
                 required: ['nome']
               }
@@ -360,12 +394,12 @@ Mostre sempre o status do evento Meta caso as ferramentas retornem essa informa√
               name: 'move_lead',
               description: 'Move um lead para uma nova coluna. Use isto quando o usu√°rio pedir para avan√ßar um lead.',
               parameters: {
-                type: 'OBJECT',
+                type: Type.OBJECT,
                 properties: {
-                  id_ou_nome: { type: 'STRING', description: 'ID exato do lead ou nome aproximado' },
-                  nova_coluna: { type: 'STRING', description: 'Nome exato da nova coluna (ex: Fechado Won, Proposta)' },
-                  valor_final: { type: 'NUMBER', description: 'Se moveu para Fechado Won, o valor fechado.' },
-                  motivo: { type: 'STRING', description: 'Se moveu para Perdido, o motivo.' }
+                  id_ou_nome: { type: Type.STRING, description: 'ID exato do lead ou nome aproximado' },
+                  nova_coluna: { type: Type.STRING, description: 'Nome exato da nova coluna (ex: Fechado Won, Proposta)' },
+                  valor_final: { type: Type.NUMBER, description: 'Se moveu para Fechado Won, o valor fechado.' },
+                  motivo: { type: Type.STRING, description: 'Se moveu para Perdido, o motivo.' }
                 },
                 required: ['id_ou_nome', 'nova_coluna']
               }
@@ -374,10 +408,10 @@ Mostre sempre o status do evento Meta caso as ferramentas retornem essa informa√
               name: 'add_note',
               description: 'Adiciona uma nota ao hist√≥rico do lead',
               parameters: {
-                type: 'OBJECT',
+                type: Type.OBJECT,
                 properties: {
-                  id_ou_nome: { type: 'STRING' },
-                  nota: { type: 'STRING' }
+                  id_ou_nome: { type: Type.STRING },
+                  nota: { type: Type.STRING }
                 },
                 required: ['id_ou_nome', 'nota']
               }
@@ -386,7 +420,7 @@ Mostre sempre o status do evento Meta caso as ferramentas retornem essa informa√
               name: 'get_dashboard_summary',
               description: 'Retorna um resumo dos dados do CRM para responder perguntas sobre estat√≠sticas',
               parameters: {
-                type: 'OBJECT',
+                type: Type.OBJECT,
                 properties: {}
               }
             }
@@ -424,9 +458,10 @@ Mostre sempre o status do evento Meta caso as ferramentas retornem essa informa√
           moeda: 'BRL',
           tags: [],
           coluna_atual: 'Novo Lead',
-          historico: [`Criado via Chat`],
+          historico: [{ message: `Criado via Chat`, timestamp: new Date().toISOString() }],
           criado_em: new Date().toISOString(),
           atualizado_em: new Date().toISOString(),
+          comentarios: [],
           notas: [],
           score: 0
         };
@@ -457,7 +492,7 @@ Mostre sempre o status do evento Meta caso as ferramentas retornem essa informa√
         const lead = findLead(args.id_ou_nome);
         if (lead) {
           lead.notas.push(args.nota);
-          lead.historico.push(`Nota: ${args.nota}`);
+          lead.historico.push({ message: `Nota: ${args.nota}`, timestamp: new Date().toISOString() });
           await saveState();
           toolResult = `‚úì Nota adicionada ao lead ${lead.nome}.`;
         } else {

@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Columns, Settings as SettingsIcon, MessageSquare, Plus, X, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Columns, Settings as SettingsIcon, MessageSquare, Plus, X, Sun, Moon, Webhook } from 'lucide-react';
 import Kanban from './components/Kanban';
 import Dashboard from './components/Dashboard';
 import SettingsView from './components/SettingsView';
+import WebhookLogsView from './components/WebhookLogsView';
 import Chat from './components/Chat';
 import AddLeadModal from './components/AddLeadModal';
 import { Lead, Settings } from './types';
 
 export default function App() {
-  const [view, setView] = useState<'kanban' | 'dashboard' | 'settings'>('dashboard');
+  const [view, setView] = useState<'kanban' | 'dashboard' | 'settings' | 'webhooks'>('dashboard');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -56,6 +57,7 @@ export default function App() {
           <NavItem icon={<LayoutDashboard />} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
           <NavItem icon={<Columns />} label="Kanban" active={view === 'kanban'} onClick={() => setView('kanban')} />
           <NavItem icon={<SettingsIcon />} label="Ajustes Meta" active={view === 'settings'} onClick={() => setView('settings')} />
+          <NavItem icon={<Webhook />} label="Webhooks" active={view === 'webhooks'} onClick={() => setView('webhooks')} />
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <button
@@ -99,6 +101,7 @@ export default function App() {
               {view === 'kanban' && <Kanban leads={leads} onUpdate={fetchState} />}
               {view === 'dashboard' && <Dashboard leads={leads} />}
               {view === 'settings' && <SettingsView settings={settings} onUpdate={fetchState} />}
+              {view === 'webhooks' && <WebhookLogsView />}
             </>
           )}
         </div>
