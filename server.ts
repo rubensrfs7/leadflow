@@ -5,13 +5,6 @@ import crypto from 'crypto';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import { Lead, WebhookLog } from './src/types';
-import * as admin from 'firebase-admin';
-
-// Initialize Firebase Admin
-admin.initializeApp();
-const db = admin.firestore();
-const webhookLogsCollection = db.collection('webhookLogs');
-const leadsCollection = db.collection('leads');
 
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 
@@ -169,39 +162,31 @@ function calculateScore(lead: Partial<Lead>) {
 }
 
 // Routes
-app.get('/api/state', async (req, res) => {
-  try {
-    const leadsSnapshot = await leadsCollection.get();
-    const leads = leadsSnapshot.docs.map(doc => doc.data());
-    
-    const settingsDoc = await db.collection('settings').doc('config').get();
-    const settings = settingsDoc.exists ? settingsDoc.data() : { configurado: false, pixelId: '', accessToken: '' };
-
-    res.json({ leads, settings });
-  } catch (e) {
-    res.status(500).json({ error: 'Erro ao buscar dados' });
-  }
+app.get('/api/state', (req, res) => {
+  res.json({
+    leads: state.leads,
+    settings: {
+      configurado: state.settings.configurado,
+      pixelId: state.settings.pixelId,
+      // Hide token
+      accessToken: state.settings.accessToken ? `EAA...${state.settings.accessToken.slice(-4)}` : ''
+    }
+  });
 });
 
 app.post('/api/settings', async (req, res) => {
   const { pixelId, accessToken } = req.body;
-  const settings = {
+  state.settings = {
     pixelId,
     accessToken,
     configurado: !!(pixelId && accessToken)
   };
-  await db.collection('settings').doc('config').set(settings);
+  await saveState();
   res.json({ success: true });
 });
 
-app.get('/api/webhook-logs', async (req, res) => {
-  try {
-    const snapshot = await webhookLogsCollection.get();
-    const logs = snapshot.docs.map(doc => doc.data());
-    res.json(logs);
-  } catch (e) {
-    res.status(500).json({ error: 'Erro ao buscar logs' });
-  }
+app.get('/api/webhook-logs', (req, res) => {
+  res.json(state.webhookLogs);
 });
 
 app.all('/webhook/lead', async (req, res) => {
@@ -260,9 +245,7 @@ app.all('/webhook/lead', async (req, res) => {
       estado: data.estado || ''
     };
     newLead.score = calculateScore(newLead);
-    
-    // Save to Firestore
-    await leadsCollection.doc(newLead.id).set(newLead);
+    state.leads.push(newLead);
     
     const eventInfo = COLUMNS.find(c => c.name === 'Novo Lead');
     let metaResult = null;
@@ -271,16 +254,15 @@ app.all('/webhook/lead', async (req, res) => {
     }
     
     log.responseBody = { success: true, lead: newLead, meta: metaResult };
-    // Save Log to Firestore
-    await webhookLogsCollection.doc(log.id).set(log);
-    
+    state.webhookLogs.push(log);
+    await saveState();
     res.json(log.responseBody);
   } catch (e: any) {
     log.status = 'failure';
     log.responseStatus = 500;
     log.responseBody = { error: e.message };
-    // Save Log to Firestore
-    await webhookLogsCollection.doc(log.id).set(log);
+    state.webhookLogs.push(log);
+    await saveState();
     res.status(500).json(log.responseBody);
   }
 });
@@ -321,7 +303,7 @@ app.post('/api/leads', async (req, res) => {
     estado: data.estado || ''
   };
   newLead.score = calculateScore(newLead);
-  await leadsCollection.doc(newLead.id).set(newLead);
+  state.leads.push(newLead);
   
   const eventInfo = COLUMNS.find(c => c.name === 'Novo Lead');
   let metaResult = null;
@@ -329,27 +311,26 @@ app.post('/api/leads', async (req, res) => {
     metaResult = await triggerMetaEvent(newLead, eventInfo);
   }
   
+  await saveState();
   res.json({ lead: newLead, meta: metaResult });
 });
 
 app.put('/api/leads/:id', async (req, res) => {
   const id = req.params.id;
   const updates = req.body;
-  
-  const leadDoc = await leadsCollection.doc(id).get();
-  if (!leadDoc.exists) return res.status(404).json({ error: 'Lead não encontrado' });
+  const index = state.leads.findIndex(l => l.id === id);
+  if (index === -1) return res.status(404).json({ error: 'Lead não encontrado' });
 
-  const lead = leadDoc.data() as Lead;
+  const lead = state.leads[index];
   const oldColumn = lead.coluna_atual;
   
   const updatedLead = { ...lead, ...updates, atualizado_em: new Date().toISOString() };
   updatedLead.score = calculateScore(updatedLead);
-  
-  await leadsCollection.doc(id).update(updatedLead);
+  state.leads[index] = updatedLead;
 
   let metaResult = null;
   if (updates.coluna_atual && updates.coluna_atual !== oldColumn) {
-    updatedLead.historico.push({ message: `Movido de ${oldColumn} para ${updates.coluna_atual}`, timestamp: new Date().toISOString() });
+    updatedLead.historico.push(`Movido de ${oldColumn} para ${updates.coluna_atual}`);
     const eventInfo = COLUMNS.find(c => c.name === updates.coluna_atual);
     if (eventInfo) {
       metaResult = await triggerMetaEvent(updatedLead, eventInfo, updates.motivo_perdido);
@@ -358,14 +339,16 @@ app.put('/api/leads/:id', async (req, res) => {
 
   if (updates.nota) {
     updatedLead.notas.push(updates.nota);
-    updatedLead.historico.push({ message: `Nota adicionada: ${updates.nota}`, timestamp: new Date().toISOString() });
+    updatedLead.historico.push(`Nota adicionada: ${updates.nota}`);
   }
 
+  await saveState();
   res.json({ lead: updatedLead, meta: metaResult });
 });
 
 app.delete('/api/leads/:id', async (req, res) => {
-  await leadsCollection.doc(req.params.id).delete();
+  state.leads = state.leads.filter(l => l.id !== req.params.id);
+  await saveState();
   res.json({ success: true });
 });
 

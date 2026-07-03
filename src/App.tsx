@@ -8,21 +8,11 @@ import SettingsView from './components/SettingsView';
 import WebhookLogsView from './components/WebhookLogsView';
 import Chat from './components/Chat';
 import AddLeadModal from './components/AddLeadModal';
-import Login from './components/Login';
+import LoginPage from './components/LoginPage';
 import { Lead, Settings } from './types';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
-  const [loadingAuth, setLoadingAuth] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoadingAuth(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
   const [view, setView] = useState<'kanban' | 'dashboard' | 'settings' | 'webhooks'>('dashboard');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
@@ -31,6 +21,14 @@ export default function App() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [settings, setSettings] = useState<Settings>({ pixelId: '', accessToken: '', configurado: false });
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const fetchState = async () => {
     try {
@@ -59,13 +57,8 @@ export default function App() {
     }
   }, [theme]);
 
-  if (loadingAuth) {
-    return <div className="flex h-screen items-center justify-center">Carregando...</div>;
-  }
-
-  if (!user) {
-    return <Login />;
-  }
+  if (loading) return <div className="flex h-screen items-center justify-center">Carregando...</div>;
+  if (!user) return <LoginPage />;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 overflow-hidden transition-colors">
@@ -93,9 +86,10 @@ export default function App() {
           </button>
           <button
             onClick={() => signOut(auth)}
-            className="w-full flex items-center justify-center md:justify-start p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+            className="w-full flex items-center justify-center md:justify-start p-2 rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 transition-colors"
           >
-            <span className="hidden md:block">Sair</span>
+            <X size={20} />
+            <span className="ml-3 hidden md:block">Sair</span>
           </button>
         </div>
       </aside>
