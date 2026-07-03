@@ -18,47 +18,47 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 px-4">
       <form 
         onSubmit={handleLogin} 
-        className="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-700"
+        className="bg-white dark:bg-gray-800 p-10 rounded-3xl shadow-2xl shadow-blue-500/10 w-full max-w-md border border-gray-100 dark:border-gray-700 transition-transform duration-300 hover:shadow-3xl"
       >
-        <div className="mb-8 text-center">
-            <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">Bem-vindo</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-2">Entre na sua conta LeadFlow</p>
+        <div className="mb-10 text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">LeadFlow</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm font-medium uppercase tracking-widest">Acesse sua conta</p>
         </div>
         
         {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-6 border border-red-200">
+            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 border border-red-100 dark:bg-red-900/20 dark:border-red-800">
                 {error}
             </div>
         )}
 
-        <div className="space-y-5">
+        <div className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Email</label>
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 ml-1 uppercase tracking-wider">Email</label>
               <div className="relative">
-                  <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
+                  <Mail className="absolute left-4 top-3.5 text-gray-400" size={18} />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all dark:text-white"
-                    placeholder="seu@email.com"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition-all dark:text-white"
+                    placeholder="voce@exemplo.com"
                     required
                   />
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Senha</label>
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 ml-1 uppercase tracking-wider">Senha</label>
               <div className="relative">
-                  <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+                  <Lock className="absolute left-4 top-3.5 text-gray-400" size={18} />
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all dark:text-white"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition-all dark:text-white"
                     placeholder="••••••••"
                     required
                   />
@@ -68,7 +68,7 @@ export default function LoginPage() {
 
         <button 
             type="submit" 
-            className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold text-lg shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+            className="w-full mt-10 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 py-4 rounded-2xl font-bold text-lg shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           Entrar
         </button>
