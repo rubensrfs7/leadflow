@@ -38,6 +38,7 @@ let state: State = {
   webhookLogs: []
 };
 
+
 // Load State
 async function loadState() {
   try {
@@ -77,7 +78,6 @@ function hashPhone(val?: string) {
   }
   return crypto.createHash('sha256').update(digits).digest('hex');
 }
-
 const COLUMNS = [
   { name: 'Novo Lead', event: 'Lead', action_source: 'crm' },
   { name: 'Contato', event: 'Contact', action_source: 'phone_call' },
@@ -88,6 +88,17 @@ const COLUMNS = [
   { name: 'Pós-venda', event: 'Subscribe', action_source: 'crm' },
   { name: 'Perdido', event: 'CustomEvent', action_source: 'crm', custom_event_type: 'LostDeal' }
 ];
+
+const ORIGIN_MAP: { [key: string]: { event: string, action_source: string } } = {
+  'Instagram': { event: 'Lead', action_source: 'website' },
+  'Google': { event: 'Lead', action_source: 'website' },
+  'Facebook': { event: 'Lead', action_source: 'website' },
+  'TikTok': { event: 'Lead', action_source: 'website' },
+  'Organic': { event: 'Lead', action_source: 'website' },
+  'Linkedin': { event: 'Lead', action_source: 'website' },
+  'X': { event: 'Lead', action_source: 'website' },
+  'Outros': { event: 'Lead', action_source: 'crm' }
+};
 
 async function triggerMetaEvent(lead: Lead, eventInfo: any, reason?: string) {
   if (!state.settings.configurado || !state.settings.pixelId || !state.settings.accessToken) {
@@ -213,6 +224,7 @@ app.post('/api/outbound-webhook', async (req, res) => {
 });
 
 app.all('/webhook/lead', async (req, res) => {
+  console.log('Webhook received:', req.method, req.body);
   if (req.method === 'GET') {
     return res.send('GET request to /webhook/lead received. The server is working.');
   }
@@ -270,11 +282,8 @@ app.all('/webhook/lead', async (req, res) => {
     newLead.score = calculateScore(newLead);
     state.leads.push(newLead);
     
-    const eventInfo = COLUMNS.find(c => c.name === 'Novo Lead');
-    let metaResult = null;
-    if (eventInfo) {
-      metaResult = await triggerMetaEvent(newLead, eventInfo);
-    }
+    const originConfig = ORIGIN_MAP[newLead.origem] || { event: 'Lead', action_source: 'crm' };
+    let metaResult = await triggerMetaEvent(newLead, originConfig);
     
     log.responseBody = { success: true, lead: newLead, meta: metaResult };
     state.webhookLogs.push(log);

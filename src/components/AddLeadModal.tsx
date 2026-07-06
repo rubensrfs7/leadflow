@@ -77,6 +77,19 @@ export default function AddLeadModal({ isOpen, onClose, onSave }: { isOpen: bool
               <input type="number" value={valor_estimado} onChange={e => setValorEstimado(e.target.value)} className="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-500/50 transition-colors" />
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Origem *</label>
+            <select value={origem} onChange={e => setOrigem(e.target.value)} className="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-500/50 transition-colors">
+              <option value="Instagram">Instagram</option>
+              <option value="Google">Google</option>
+              <option value="Facebook">Facebook</option>
+              <option value="TikTok">TikTok</option>
+              <option value="Organic">Organic</option>
+              <option value="Linkedin">Linkedin</option>
+              <option value="X">X</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
           <div className="pt-4 flex justify-end gap-3">
             <button type="button" onClick={onClose} disabled={loading} className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Cancelar</button>
             <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50">
