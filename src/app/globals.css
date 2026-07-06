@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #1499b9;
+  --color-secondary: #587c8a;
+  --color-tertiary: #c07a24;
+  --color-neutral: #73787a;
+  --radius-app: 0.75rem;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+html.dark body {
+  background: #070a13;
+  color: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
