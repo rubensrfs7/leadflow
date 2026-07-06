@@ -7,10 +7,12 @@ export default function WebhookLogsView() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'entrada' | 'saida'>('entrada');
   const [appUrl, setAppUrl] = useState('');
+  const [outboundUrl, setOutboundUrl] = useState('');
 
   useEffect(() => {
     setAppUrl(window.location.origin);
     fetchLogs();
+    fetch('/api/outbound-webhook').then(res => res.json()).then(data => setOutboundUrl(data.url || ''));
   }, []);
 
   const fetchLogs = async () => {
@@ -70,6 +72,21 @@ export default function WebhookLogsView() {
     }`}
               </pre>
             </div>
+            
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Exemplo cURL</h4>
+              <pre className="text-xs bg-gray-900 dark:bg-black text-gray-300 p-4 rounded-lg overflow-x-auto border border-gray-700">
+{`curl -X POST ${appUrl}/webhook/lead \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "nome": "João Silva",
+    "email": "joao@email.com",
+    "telefone": "11987654321",
+    "empresa": "Acme Corp",
+    "origem": "Formulário Site"
+  }'`}
+              </pre>
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden p-6">
             <h3 className="text-lg font-semibold mb-4">Logs de Entrada</h3>
@@ -111,8 +128,16 @@ export default function WebhookLogsView() {
       )}
 
       {activeTab === 'saida' && (
-        <div className="p-8 text-center text-gray-500">
-          Configurações e logs de saída não configurados ainda.
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Webhook de Saída</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+            Dados de leads atualizados ou fechados serão enviados automaticamente para esta URL.
+          </p>
+          <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
+            <div className="text-sm font-mono text-gray-800 dark:text-gray-200 break-all">
+              <span className="font-bold text-gray-700 dark:text-gray-300">URL Atual:</span> {outboundUrl || 'Não configurada'}
+            </div>
+          </div>
         </div>
       )}
     </div>

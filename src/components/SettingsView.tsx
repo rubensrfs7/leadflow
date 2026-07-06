@@ -5,6 +5,9 @@ import { Facebook, CheckCircle2, ChevronRight, Loader2, X } from 'lucide-react';
 export default function SettingsView({ settings, onUpdate }: { settings: Settings, onUpdate: () => void }) {
   const [pixelId, setPixelId] = useState(settings.pixelId);
   const [accessToken, setAccessToken] = useState('');
+  const [googleAdsConversionId, setGoogleAdsConversionId] = useState(settings.googleAdsConversionId || '');
+  const [googleAdsConversionLabel, setGoogleAdsConversionLabel] = useState(settings.googleAdsConversionLabel || '');
+  const [outboundWebhookUrl, setOutboundWebhookUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [appUrl, setAppUrl] = useState('');
@@ -13,6 +16,7 @@ export default function SettingsView({ settings, onUpdate }: { settings: Setting
 
   useEffect(() => {
     setAppUrl(window.location.origin);
+    fetch('/api/outbound-webhook').then(res => res.json()).then(data => setOutboundWebhookUrl(data.url || ''));
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -22,11 +26,20 @@ export default function SettingsView({ settings, onUpdate }: { settings: Setting
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pixelId, accessToken })
+        body: JSON.stringify({ pixelId, accessToken, googleAdsConversionId, googleAdsConversionLabel })
       });
-      if (res.ok) {
-        setMessage('Configurações salvas com sucesso! Integração Meta CAPI ativada.');
+      
+      const resOutbound = await fetch('/api/outbound-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: outboundWebhookUrl })
+      });
+      
+      if (res.ok && resOutbound.ok) {
+        setMessage('Configurações salvas com sucesso!');
         onUpdate();
+      } else {
+        setMessage('Erro ao salvar configurações.');
       }
     } catch (err) {
       setMessage('Erro ao salvar configurações.');
@@ -109,6 +122,39 @@ export default function SettingsView({ settings, onUpdate }: { settings: Setting
               className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500/50 outline-none transition-colors"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Gerado no Events Manager &gt; Configurações &gt; API de Conversões.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Google Ads Conversion ID</label>
+            <input
+              type="text"
+              value={googleAdsConversionId}
+              onChange={e => setGoogleAdsConversionId(e.target.value)}
+              placeholder="Ex: AW-123456789"
+              className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500/50 outline-none transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Google Ads Conversion Label</label>
+            <input
+              type="text"
+              value={googleAdsConversionLabel}
+              onChange={e => setGoogleAdsConversionLabel(e.target.value)}
+              placeholder="Ex: abcdefghijklmnopqrstuvw"
+              className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500/50 outline-none transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Webhook de Saída (URL)</label>
+            <input
+              type="text"
+              value={outboundWebhookUrl}
+              onChange={e => setOutboundWebhookUrl(e.target.value)}
+              placeholder="Ex: https://webhook.site/..."
+              className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500/50 outline-none transition-colors"
+            />
           </div>
 
           {message && (

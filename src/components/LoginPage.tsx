@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { getAuthInstance } from '../lib/firebase';
+const auth = getAuthInstance();
 import { Lock, Mail } from 'lucide-react';
 
 export default function LoginPage() {

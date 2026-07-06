@@ -59,6 +59,8 @@ export interface Lead {
 export interface Settings {
   pixelId: string;
   accessToken: string;
+  googleAdsConversionId?: string;
+  googleAdsConversionLabel?: string;
   configurado: boolean;
 }
 

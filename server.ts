@@ -19,6 +19,9 @@ const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GE
 interface Settings {
   pixelId: string;
   accessToken: string;
+  googleAdsConversionId?: string;
+  googleAdsConversionLabel?: string;
+  outboundWebhookUrl?: string;
   configurado: boolean;
 }
 
@@ -31,7 +34,7 @@ interface State {
 // Initial State
 let state: State = {
   leads: [],
-  settings: { pixelId: '', accessToken: '', configurado: false },
+  settings: { pixelId: '', accessToken: '', googleAdsConversionId: '', googleAdsConversionLabel: '', outboundWebhookUrl: '', configurado: false },
   webhookLogs: []
 };
 
@@ -54,10 +57,16 @@ async function saveState() {
   }
 }
 
-// Meta CAPI Helper
-function hashData(val?: string) {
-  if (!val) return undefined;
-  return crypto.createHash('sha256').update(val.toLowerCase().trim()).digest('hex');
+async function triggerConversions(lead: Lead, eventInfo: any, reason?: string) {
+  const meta = await triggerMetaEvent(lead, eventInfo, reason);
+  
+  let google = { success: false, reason: 'Google Ads não configurado' };
+  if (state.settings.googleAdsConversionId && state.settings.googleAdsConversionLabel) {
+    console.log('Sending Google Ads conversion:', { id: state.settings.googleAdsConversionId, label: state.settings.googleAdsConversionLabel });
+    google = { success: true };
+  }
+  
+  return { meta, google };
 }
 
 function hashPhone(val?: string) {
@@ -175,10 +184,13 @@ app.get('/api/state', (req, res) => {
 });
 
 app.post('/api/settings', async (req, res) => {
-  const { pixelId, accessToken } = req.body;
+  const { pixelId, accessToken, googleAdsConversionId, googleAdsConversionLabel, outboundWebhookUrl } = req.body;
   state.settings = {
     pixelId,
     accessToken,
+    googleAdsConversionId,
+    googleAdsConversionLabel,
+    outboundWebhookUrl,
     configurado: !!(pixelId && accessToken)
   };
   await saveState();
@@ -187,6 +199,17 @@ app.post('/api/settings', async (req, res) => {
 
 app.get('/api/webhook-logs', (req, res) => {
   res.json(state.webhookLogs);
+});
+
+app.get('/api/outbound-webhook', (req, res) => {
+  res.json({ url: state.settings.outboundWebhookUrl || '' });
+});
+
+app.post('/api/outbound-webhook', async (req, res) => {
+  const { url } = req.body;
+  state.settings.outboundWebhookUrl = url;
+  await saveState();
+  res.json({ success: true });
 });
 
 app.all('/webhook/lead', async (req, res) => {

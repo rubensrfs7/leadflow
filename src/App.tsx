@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Columns, Settings as SettingsIcon, MessageSquare, Plus, X, Sun, Moon, Webhook } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from './lib/firebase';
+import { getAuthInstance } from './lib/firebase';
+const auth = getAuthInstance();
 import Kanban from './components/Kanban';
 import Dashboard from './components/Dashboard';
 import SettingsView from './components/SettingsView';
@@ -73,7 +74,7 @@ export default function App() {
         <nav className="flex-1 py-4 flex flex-col gap-2 px-2">
           <NavItem icon={<LayoutDashboard />} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
           <NavItem icon={<Columns />} label="Kanban" active={view === 'kanban'} onClick={() => setView('kanban')} />
-          <NavItem icon={<SettingsIcon />} label="Ajustes Meta" active={view === 'settings'} onClick={() => setView('settings')} />
+          <NavItem icon={<SettingsIcon />} label="Ajustes" active={view === 'settings'} onClick={() => setView('settings')} />
           <NavItem icon={<Webhook />} label="Webhooks" active={view === 'webhooks'} onClick={() => setView('webhooks')} />
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
